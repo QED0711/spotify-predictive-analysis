@@ -1,3 +1,4 @@
+import pdb 
 import numpy as np
 import pandas as pd
 
@@ -49,3 +50,22 @@ def run_multinomial_log_reg(df, genres, features, solver="lbfgs"):
     multi_logreg.fit(X_train, y_train)
     
     return multi_logreg.score(X_test,y_test)
+
+
+def plot_roc(df, genre1, genre2):
+    """
+    Accepts a dataframe with columns for fpr and tpr.
+    subsets those columns and plots the ROC 
+    """
+    genre_comparison = df[(df.genre_1 == genre1) & (df.genre_2 == genre2)]
+    tpr = genre_comparison.tpr[genre_comparison.index[0]]
+    fpr = genre_comparison.fpr[genre_comparison.index[0]]
+
+    sns.lineplot(fpr,tpr)
+    plt.title(f"ROC - {genre1} & {genre2}", fontsize=24)
+
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+
+    plt.show()
+    return genre_comparison.AUC[genre_comparison.index[0]]

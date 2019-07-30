@@ -17,10 +17,12 @@ def plot_genre_features_timeseries(df, genres, feature, start_year="1970", end_y
         current_df = df[df.Super_genre == genre]
         current_df = current_df[start_year:end_year].resample('m').mean()
         
-        sns.scatterplot(current_df.index, current_df[feature], data=current_df, alpha=0.66, ax=ax)
+        sns.scatterplot(current_df.index, current_df[feature], data=current_df, alpha=0.4, ax=ax)
     
     plt.legend(genres, fontsize=18)
     plt.title(f"{feature} Over Time by Genre", fontsize=24)
+    plt.xlabel("Release Date", fontsize=18)
+    plt.ylabel(feature, fontsize=18)
     plt.show()
 
 
