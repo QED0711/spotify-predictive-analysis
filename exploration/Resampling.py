@@ -318,3 +318,236 @@ def adjusted_r_squared(result):
     return 1 - (1 - result["r_squared"]) * adjustment
 
 
+import warnings
+import numpy as np
+import random
+import numpy.random as np_random
+import time
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy.stats as stats
+import patsy
+import sklearn.linear_model as linear
+from collections import defaultdict
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import train_test_split  
+from sklearn.model_selection import KFold
+
+sns.set(style="whitegrid")
+warnings.simplefilter('ignore')
+
+
+#Provide correlation evaluation for selected features
+def correlations(data, y, xs):
+    rs = []
+    rhos = []
+    for x in xs:
+        r = stats.pearsonr(data[y], data[x])[0]
+        rs.append(r)
+        rho = stats.spearmanr(data[y], data[x])[0]
+        rhos.append(rho)
+    return pd.DataFrame({"feature": xs, "r": rs, "rho": rhos})
+
+
+#plot residuals of the model with respect to selected features
+def plot_residuals(result, variables, data):
+    figure = plt.figure(figsize=(20,10))
+
+    plots = len( variables)
+    rows = (plots // 3) + 1
+
+    residuals = np.array([r[0] for r in result["residuals"]])
+    limits = max(np.abs(residuals.min()), residuals.max())
+    
+    n = result["n"]
+    for i, variable in enumerate( variables):
+        axes = figure.add_subplot(rows, 3, i + 1)
+
+        keyed_values = sorted(zip(data[variable].values, residuals), key=lambda x: x[ 0])
+        ordered_residuals = [x[ 1] for x in keyed_values]
+
+        axes.plot(list(range(0, n)), ordered_residuals, '.', color="dimgray", alpha=0.75)
+        axes.axhline(y=0.0, xmin=0, xmax=n, c="firebrick", alpha=0.5)
+        axes.set_ylim((-limits, limits))
+        axes.set_ylabel("residuals")
+        axes.set_xlabel(variable)
+
+    plt.show()
+    plt.close()
+    
+    return residuals
+#Create data splits
+def chunk(xs, n):
+    k, m = divmod(len(xs), n)
+    return [xs[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n)]
+
+
+#execture linear regression with 3 rounds and 10-folds of the data set
+def linear_regression_fold(formula, builder, data, fold_count=10, repetitions=3):
+    indices = list(range(len( data)))
+    metrics = {"train": [], "test": []}
+    for _ in range(repetitions):
+        random.shuffle(indices)
+        folds = chunk(indices, fold_count)
+        for fold in folds:
+            test_data = data.iloc[fold]
+            train_indices = [idx not in fold for idx in indices]
+            train_data = data.iloc[train_indices]
+            # y, X for training data
+            y, X = patsy.dmatrices(formula, train_data, return_type="matrix")
+            model = builder.fit(X, y)
+            y_hat = model.predict(X)
+            training_r_squared = (stats.pearsonr(y, y_hat)[0][0])**2
+            metrics["train"].append(training_r_squared)
+            # y, X for training data
+            y, X = patsy.dmatrices(formula, test_data, return_type="matrix")
+            y_hat = model.predict(X)
+            test_r_squared = (stats.pearsonr(y, y_hat)[0][0])**2
+            metrics["test"].append(test_r_squared)
+    return metrics
+#create dictionary dataset
+def data_collection():
+    result = dict()
+    result[ "train"] = defaultdict( list)
+    result[ "test"] = defaultdict( list)
+    return result
+
+
+#execute learning curves
+def learning_curves(algorithm, formula, data, evaluate, fold_count=10, repetitions=1, increment=1):
+    indices = list(range(len( data)))
+    results = data_collection()
+    for _ in range(repetitions):
+        random.shuffle(indices)
+        folds = chunk(indices, fold_count)
+        for fold in folds:
+            test_data = data.iloc[ fold]
+            train_indices = [idx for idx in indices if idx not in fold]
+            train_data = data.iloc[train_indices]
+            for i in list(range(increment, 100, increment)) + [100]: # ensures 100% is always picked.
+                # the indices are already shuffled so we only need to take ever increasing chunks
+                train_chunk_size = int( np.ceil((i/100)*len( train_indices)))
+                train_data_chunk = data.iloc[train_indices[0:train_chunk_size]]
+                # we calculate the model
+                result = algorithm(formula, data=train_data_chunk)
+                model = result["model"]
+                # we calculate the results for the training data subset
+                y, X = patsy.dmatrices( formula, train_data_chunk, return_type="matrix")
+                result = summarize(formula, X, y, model)
+                metric = evaluate(result)
+                results["train"][i].append( metric)
+                
+                # we calculate the results for the test data.
+                y, X = patsy.dmatrices( formula, test_data, return_type="matrix")
+                result = summarize(formula, X, y, model)
+                metric = evaluate(result)
+                results["test"][i].append( metric)
+            #
+        #
+    # process results
+    # Rely on the CLT...
+    statistics = {}
+    for k, v in results["train"].items():
+        statistics[ k] = (np.mean(v), np.std(v))
+    results["train"] = statistics
+    statistics = {}
+    for k, v in results["test"].items():
+        statistics[ k] = (np.mean(v), np.std(v))
+    results["test"] = statistics
+    return results
+#consolidated results of the learning curve
+def results_to_curves( curve, results):
+    all_statistics = results[ curve]
+    keys = list( all_statistics.keys())
+    keys.sort()
+    mean = []
+    upper = []
+    lower = []
+    for k in keys:
+        m, s = all_statistics[ k]
+        mean.append( m)
+        upper.append( m + 2 * s)
+        lower.append( m - 2 * s)
+    return keys, lower, mean, upper
+
+
+#plot learning cruves
+def plot_learning_curves( results, metric, zoom=False):
+    figure = plt.figure(figsize=(10,6))
+
+    axes = figure.add_subplot(1, 1, 1)
+
+    xs, train_lower, train_mean, train_upper = results_to_curves( "train", results)
+    _, test_lower, test_mean, test_upper = results_to_curves( "test", results)
+
+    axes.plot( xs, train_mean, color="steelblue")
+    axes.fill_between( xs, train_upper, train_lower, color="steelblue", alpha=0.25, label="train")
+    axes.plot( xs, test_mean, color="firebrick")
+    axes.fill_between( xs, test_upper, test_lower, color="firebrick", alpha=0.25, label="test")
+    axes.legend()
+    axes.set_xlabel( "training set (%)")
+    axes.set_ylabel( metric)
+    axes.set_title("Learning Curves")
+
+    if zoom:
+        y_lower = int( 0.9 * np.amin([train_lower[-1], test_lower[-1]]))
+        y_upper = int( 1.1 * np.amax([train_upper[-1], test_upper[-1]]))
+        axes.set_ylim((y_lower, y_upper))
+
+    plt.show()
+    plt.close()
+#
+
+#calculate root mean ssquared error
+def rmse( y, y_hat):
+    return np.sqrt((1.0/len( y)) * np.sum((y - y_hat)**2))
+
+
+
+#execute random forest
+def Random_Forest(regressor,data,X,y):
+    #Number of fold with random seed of 1234
+    kf = KFold(10, True, 1234)
+    
+    np.random.seed(1234)
+    rf_metrics = {"train": [], "test": [],"rmse_train":[], "rmse_test":[]}
+    for i in range (0,3):        
+        #creating indices for 10-folds
+        for train_index, test_index in kf.split(data):
+            X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+            y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+
+            #training Set
+            regressor.fit(X_train, y_train)
+            y_hat = regressor.predict(X_train)
+            training_r_squared = (stats.pearsonr(y_train,y_hat)[0])**2
+            rf_metrics["train"].append(training_r_squared)
+            rf_metrics["rmse_train"].append(rmse(y_train, y_hat))
+
+            
+            #Test Set
+            regressor.fit(X_test, y_test)
+            y_pred = regressor.predict(X_test)
+            test_r_squared = (stats.pearsonr(y_test,y_pred)[0])**2
+            rf_metrics["test"].append(test_r_squared)
+            rf_metrics["rmse_test"].append(rmse(y_test, y_pred))
+    return rf_metrics
+            
+#validation curve for random forest
+def validation_curve_rf(seed, X, y, min_val, max_val, step, test_size=0.30):
+    train_scores = []
+    test_scores = []
+    
+    for i in range(min_val, max_val + 10):
+        from sklearn.model_selection import train_test_split
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=1234)
+        reg = RandomForestRegressor(random_state=1234, n_estimators=i)
+        reg.fit(X_train, y_train)
+        y_pred = reg.predict(X_train)
+        train_scores.append(rmse(y_train, y_pred))
+        y_pred = reg.predict(X_test)
+        test_scores.append(rmse(y_test, y_pred))
+    return train_scores, test_scores
+
