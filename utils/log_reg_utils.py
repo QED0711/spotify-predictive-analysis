@@ -2,6 +2,8 @@ import pdb
 import numpy as np
 import pandas as pd
 
+from math import ceil
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -52,7 +54,7 @@ def run_multinomial_log_reg(df, genres, features, solver="lbfgs"):
     return multi_logreg.score(X_test,y_test)
 
 
-def plot_roc(df, genre1, genre2):
+def plot_roc(df, genre1, genre2, axis):
     """
     Accepts a dataframe with columns for fpr and tpr.
     subsets those columns and plots the ROC 
@@ -61,11 +63,26 @@ def plot_roc(df, genre1, genre2):
     tpr = genre_comparison.tpr[genre_comparison.index[0]]
     fpr = genre_comparison.fpr[genre_comparison.index[0]]
 
-    sns.lineplot(fpr,tpr)
-    plt.title(f"ROC - {genre1} & {genre2}", fontsize=24)
+    AUC = genre_comparison.AUC[genre_comparison.index[0]]
+
+    sns.lineplot(fpr,tpr, ax=axis)
+    plt.title(f"{genre1.title()} & {genre2.title()} (AUC: {round(AUC,3)})", fontsize=24)
 
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
 
-    plt.show()
+    # plt.show()
     return genre_comparison.AUC[genre_comparison.index[0]]
+
+
+def plot_roc_group(df, genre_pairs):
+    
+    fig = plt.figure(figsize=(16,8))
+
+    for i, pair in enumerate(genre_pairs):
+        ax = fig.add_subplot(ceil(len(genre_pairs) / 2), 2, i + 1)
+
+        plot_roc(df, pair[0], pair[1], ax)
+
+    plt.tight_layout()
+    plt.show()
