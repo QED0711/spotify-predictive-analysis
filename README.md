@@ -15,13 +15,13 @@
 - [Summary of Files](#Files-summary)
 
 ## Introduction
-
+<img src="https://dl2.macupdate.com/images/icons256/33033.png?d=1562168849" alt="spotify logo" style="margin:0 auto; width=300px;" >
 ### Problem Statement
 Is the data that spotify put to describe and classify songs feasible for predictive or classifying analysis?
 
 
 ### Dataset
- The data used for this project was taken from kaggle in conjunction with our own Spotify API query to complete the necessary data needed for our intended analysis.
+The data used for this project was taken from kaggle in conjunction with our own Spotify API query to complete the necessary data needed for our intended analysis.
  
 The features from the dataset are described in details at the [Spotify documentation](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/)
  
@@ -34,7 +34,7 @@ There was no text features that would need to be dropped nor further analysis fo
 
 ### Exploratory Data Analysis
 
-Fot the initial linear regression analysis, correlation and covariance was explored and the results showed very few high correlations. Based on the results, the target chosen was 'Energy' as it has the most and highest correlations on other features.
+Fot the initial linear regression analysis, correlation was explored and the result showed very few high correlations. Based on the correlations, the target chosen was 'Energy' as it has the most and highest correlations on other features.
 
 
 ### Time Series Analysis
