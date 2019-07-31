@@ -23,14 +23,14 @@ Is the data that spotify put to describe and classify songs feasible for predict
 ### Dataset
 The data used for this project was taken from kaggle in conjunction with our own Spotify API query to complete the necessary data needed for our intended analysis.
  
-The features from the dataset are described in details at the [Spotify documentation](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/)
+The features from the dataset are described in detail at the [Spotify documentation](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/)
  
 ## Analysis
 
 ### Data Cleaning
 The data from kaggle was very clean. As mentioned prior, we just needed supplemental information hence the API query. Our project needed the 'time' measure/feature to conduct time series analysis.
 
-There was no text features that would need to be dropped nor further analysis for sentiment.
+The final dataset has no text features that would need to be dropped nor further analysis for sentiment.
 
 ### Exploratory Data Analysis
 
