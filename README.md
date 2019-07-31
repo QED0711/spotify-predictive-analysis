@@ -38,6 +38,7 @@ Fot the initial linear regression analysis, correlation was explored and the res
 
 
 ### Time Series Analysis
+Our time series analysis is broken down into two parts. First, we look at how the number of tracks/albums rleased over time changes, and how certain features in our dataset change in that same time period. Second, we incorperate information from our genre analysis (logistic regression), and see how certain features change over time with respect to specific genres. 
 
 ### Linear Regression
 The linear regression analysis was done on all the features to include dummies for all categorical features. The initial result was acceptable at an adjusted R-squared value of 0.77. From this result, the target was transformed to make its distribution closer to normal. Some features were also transformed for similar purpose.
@@ -47,6 +48,7 @@ After the transformation, the model improved the scores by 0.03 for all inclusiv
 Lastly, Ridge Regression was applied to the data with the optimal alpha of 0.001 and a resulting Adjusted R-Squared of 0.801
 
 ### Logistic Regression
+Using logistic regression, we attempt to predict genres based on the provided features. We first attempt to make predictions between pairs of genres and record the varying results. Following this, we attempt a multinomial logistic regression to predict between multiple genres.     
 
 ## Responsibilities
 
