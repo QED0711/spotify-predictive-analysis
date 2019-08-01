@@ -65,4 +65,4 @@ Datasets used for this project are found in the data folder(both from kaggle and
 
 Analysis notebooks are found respectively in the exploration folder.
 
-All .png files were used for project presentation stored in images folder.
+Project presentation is found on the main repo folder; all images/.png files used for project presentation are stored in the images folder.
