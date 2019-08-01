@@ -61,5 +61,8 @@ Linear Regression was completed by Allan.
 The project presentation was a joint effort.
 
 ## Summary of Files
+Datasets used for this project are found in the data folder(both from kaggle and API query)
 
-All .png files were used for project presentation.
+Analysis notebooks are found respectively in the exploration folder.
+
+All .png files were used for project presentation stored in images folder.
