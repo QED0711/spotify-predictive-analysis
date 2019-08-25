@@ -16,8 +16,9 @@
 
 ## Introduction
 <img src="https://dl2.macupdate.com/images/icons256/33033.png?d=1562168849" alt="spotify logo" style="margin:0 auto; width=300px;" >
+
 ### Problem Statement
-Is the data that spotify put to describe and classify songs feasible for predictive or classifying analysis?
+Is the data that spotify uses to describe and classify songs feasible for predictive or classifying analysis?
 
 
 ### Dataset
